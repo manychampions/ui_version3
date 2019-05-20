@@ -1,0 +1,6 @@
+yuxinghuang.png	male	26	1	ceo
+Aamir_Khan.jpg	male	54	2	actor
+Curry.jpg	male	31	3	basketball_palyer
+Kareena_kapoor.jpg	female	39	4	actress
+Sharman_Joshi.jpg	male	40	5	actor
+zjh.jpg	male	25	66	master
