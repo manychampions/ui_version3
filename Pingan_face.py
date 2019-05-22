@@ -15,7 +15,9 @@ from PyQt5.QtWidgets import *
 from Ui_Pingan_face import Ui_MainWindow
 from Open_Camera import CameraThread
 from Read_Video import VideoThread
+from ui_message_input import Ui_MI_MainWindow
 #from Add_person import Add_Person
+# from message_input import *
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -108,7 +110,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         # TODO: not implemented yet
         raise NotImplementedError
-    
+
+
     @pyqtSlot()
     def on_info_pushButton_clicked(self):
         """
@@ -116,12 +119,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         """
         # TODO: not implemented yet
         raise NotImplementedError
-        
-        
+
+
+class widget(QMainWindow,  Ui_MI_MainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)  # 初始化运行B窗口类下的 setupUi 函数
+        # self.B_bt1.clicked.connect(self.close)  # 窗口2 中的关闭按钮
         
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     ui = MainWindow()
+    B1 = widget()
+    ui.info_pushButton.clicked.connect(B1.show)
     ui.show()
     sys.exit(app.exec_())

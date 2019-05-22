@@ -7,6 +7,7 @@ import numpy as np
 import face_recognition
 import os
 from scipy.spatial import distance as dist
+from ui_message_input import Ui_MI_MainWindow
 import time
 
 class CameraThread(QThread, Ui_MainWindow):
@@ -162,42 +163,42 @@ class CameraThread(QThread, Ui_MainWindow):
                     if len(face_names) == 1:
                         emotion = face_emotion(face_landmarks, faces_location)
 
-                    # if len(face_landmarks)==1:
-                    #     # 眨眼检测
-                    #     leftEye = np.array(face_landmarks[0]['left_eye'])
-                    #     rightEye = np.array(face_landmarks[0]['right_eye'])
-                    #     leftEAR = self.eye_aspect_ratio(leftEye)
-                    #     rightEAR = self.eye_aspect_ratio(rightEye)
-                    #     ear = (leftEAR + rightEAR) / 2.0
-                    #     # compute the convex hull for the left and right eye, then
-                    #     # visualize each of the eyes
-                    #     leftEyeHull = cv2.convexHull(leftEye)
-                    #     rightEyeHull = cv2.convexHull(rightEye)
-                    #     cv2.drawContours(input_img, [leftEyeHull], -1, (0, 255, 0), 1)
-                    #     cv2.drawContours(input_img, [rightEyeHull], -1, (0, 255, 0), 1)
-                    #
-                    #     # check to see if the eye aspect ratio is below the blink
-                    #     # threshold, and if so, increment the blink frame counter
-                    #     if ear < EYE_AR_THRESH:
-                    #         COUNTER += 1
-                    #
-                    #     # otherwise, the eye aspect ratio is not below the blink
-                    #     # threshold
-                    #     else:
-                    #         # if the eyes were closed for a sufficient number of
-                    #         # then increment the total number of blinks
-                    #         if COUNTER >= EYE_AR_CONSEC_FRAMES:
-                    #             TOTAL += 1
-                    #
-                    #         # reset the eye frame counter
-                    #         COUNTER = 0
-                    #
-                    #     # draw the total number of blinks on the frame along with
-                    #     # the computed eye aspect ratio for the frame
-                    #     cv2.putText(input_img, "Blinks: {}".format(TOTAL), (10, 30),
-                    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                    #     cv2.putText(input_img, "EAR: {:.2f}".format(ear), (300, 30),
-                    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    if len(face_landmarks)==1:
+                        # 眨眼检测
+                        leftEye = np.array(face_landmarks[0]['left_eye'])
+                        rightEye = np.array(face_landmarks[0]['right_eye'])
+                        leftEAR = self.eye_aspect_ratio(leftEye)
+                        rightEAR = self.eye_aspect_ratio(rightEye)
+                        ear = (leftEAR + rightEAR) / 2.0
+                        # compute the convex hull for the left and right eye, then
+                        # visualize each of the eyes
+                        leftEyeHull = cv2.convexHull(leftEye)
+                        rightEyeHull = cv2.convexHull(rightEye)
+                        cv2.drawContours(input_img, [leftEyeHull], -1, (0, 255, 0), 1)
+                        cv2.drawContours(input_img, [rightEyeHull], -1, (0, 255, 0), 1)
+
+                        # check to see if the eye aspect ratio is below the blink
+                        # threshold, and if so, increment the blink frame counter
+                        if ear < EYE_AR_THRESH:
+                            COUNTER += 1
+
+                        # otherwise, the eye aspect ratio is not below the blink
+                        # threshold
+                        else:
+                            # if the eyes were closed for a sufficient number of
+                            # then increment the total number of blinks
+                            if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                                TOTAL += 1
+
+                            # reset the eye frame counter
+                            COUNTER = 0
+
+                        # draw the total number of blinks on the frame along with
+                        # the computed eye aspect ratio for the frame
+                        cv2.putText(input_img, "Blinks: {}".format(TOTAL), (10, 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                        cv2.putText(input_img, "EAR: {:.2f}".format(ear), (300, 30),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
                     # 绘框
                     for name, d in zip(face_names, faces_location):
@@ -252,4 +253,46 @@ class CameraThread(QThread, Ui_MainWindow):
 #        
 #        
 #    def save_img(self):
-            
+
+
+class CameraFrame(QThread, Ui_MI_MainWindow):
+    CameraFram = pyqtSignal(QImage)
+    OpenVideoFlage = pyqtSignal(bool)
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self):
+
+        self.Run_Camera = 1
+        self.cap = cv2.VideoCapture(0)  # 0是摄像头位置
+
+        ret, self.img_read = self.cap.read()
+
+        if (not self.cap.isOpened()):
+            self.cap.open()
+            self.cap.set(3, 500)
+            self.cap.set(4, 600)
+
+        elif (self.cap.isOpened()):
+            while self.Run_Camera:
+                ret, self.img_read = self.cap.read()
+                cv2.waitKey(1)  # 延时1s
+                if ret != None:
+                    # 考虑把图像缩小0.25来检测识别
+                    h, w = self.img_read.shape[:2]
+                    input_img = cv2.cvtColor(self.img_read, cv2.COLOR_BGR2RGB)
+                    show_pic = QImage(input_img.data, w, h, QImage.Format_RGB888)
+                    if self.Run_Camera:
+                        self.CameraFram.emit(show_pic)
+                    else:
+                        break
+                else:
+                    print('摄像头连接正常')
+            self.cap.release()
+            self.quit()
+        else:
+            self.OpenVideoFlage.emit(self.cap.isOpened())
+
+    def Stop_Video(self):
+        self.Run_Camera = 0
